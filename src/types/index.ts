@@ -3,3 +3,8 @@ export interface ICellValue {
 	active: boolean;
 	value: number;
 }
+
+export interface IDecade {
+	start: number;
+	end: number;
+}
