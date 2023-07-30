@@ -1,44 +1,33 @@
 <script lang="ts">
 	import { dayOffset, days, months, yearsRange } from '$lib/config';
+	import calendarIcon from '$lib/icons/calendar.svg';
 	import downIcon from '$lib/icons/down.svg';
 	import upIcon from '$lib/icons/up.svg';
 	import dayjs from 'dayjs';
 
-	interface IDateValue {
+	interface ICellValue {
+		text: string | number;
 		active: boolean;
 		value: number;
 	}
 
-	interface IMonthValue extends IDateValue {
-		text: string;
-	}
-
 	const d = dayjs();
 
-	let slicedMonthList: IMonthValue[][];
-	let slicedYearList: IDateValue[][];
-	let slicedDateList: IDateValue[][];
+	let slicedDateList: ICellValue[][];
+	let slicedMonthList: ICellValue[][];
+	let slicedYearList: ICellValue[][];
 
 	let selectionStage: 0 | 1 | 2 = 0;
 	let currentMonth = d.month();
-	let currentYear = d.year();
 	let currentDate = d.date();
 	let datePickerOpen = true;
-
-	const selected = {
-		year: currentYear,
-		month: currentMonth,
-		date: currentDate
-	};
+	let selected = dayjs();
 
 	/////////////////// Reactive values below this ///////////////////
 
-	$: {
-		const yearDiff = Math.floor((currentMonth - 12) / 12) + 1;
-		currentYear = d.year(d.year() + yearDiff).year();
-	}
-
+	$: currentYear = d.month(currentMonth).year();
 	$: farthestYearInPast = d.year() - yearsRange;
+	$: isActiveMonth = !((currentMonth % 12) - selected.month());
 	$: weekdays = dayOffset ? [...days.slice(dayOffset), ...days.slice(0, dayOffset)] : days;
 
 	$: decadeRange = (() => {
@@ -51,7 +40,7 @@
 
 	$: {
 		const start = currentYear - d.year();
-		const monthsList: IMonthValue[] = [
+		const monthsList: ICellValue[] = [
 			...months.map((value, i) => ({
 				active: true,
 				value: i + start * 12,
@@ -69,17 +58,19 @@
 	$: {
 		const { start, end } = decadeRange;
 		let startIndex = (start - farthestYearInPast) % 4;
-		let yearsList: IDateValue[] = [
+		let yearsList: ICellValue[] = [
 			...Array.from({ length: startIndex }, (_, i) => ({
 				active: false,
+				text: start - (i + 1),
 				value: start - (i + 1)
 			})).reverse(),
-			...Array.from({ length: 10 }, (_, i) => ({ active: true, value: start + i }))
+			...Array.from({ length: 10 }, (_, i) => ({ active: true, value: start + i, text: start + i }))
 		];
 		yearsList = [
 			...yearsList,
 			...Array.from({ length: 16 - yearsList.length }, (_, i) => ({
 				active: false,
+				text: end + (i + 1),
 				value: end + (i + 1)
 			}))
 		];
@@ -90,7 +81,7 @@
 		const daysInMonth = d.month(currentMonth).daysInMonth();
 		const startAt = d.month(currentMonth).set('date', 1).day();
 		const daysInPreviousMonth = d.month(currentMonth - 1).daysInMonth();
-		let dateList: IDateValue[] = [
+		let dateList: ICellValue[] = [
 			...Array.from(
 				{
 					length: (() => {
@@ -99,16 +90,22 @@
 					})()
 				},
 				(_, i) => ({
-					value: daysInPreviousMonth - i,
+					value: -i,
+					text: daysInPreviousMonth - i,
 					active: false
 				})
 			).reverse(),
-			...Array.from({ length: daysInMonth }, (_, i) => ({ value: i + 1, active: true }))
+			...Array.from({ length: daysInMonth }, (_, i) => ({
+				value: i + 1,
+				text: i + 1,
+				active: true
+			}))
 		];
 		dateList = [
 			...dateList,
 			...Array.from({ length: 42 - dateList.length }, (_, i) => ({
-				value: i + 1,
+				value: daysInMonth + i + 1,
+				text: i + 1,
 				active: false
 			}))
 		];
@@ -149,19 +146,32 @@
 
 	const setCurrentYear = (value: number) => (e: MouseEvent) => {
 		currentMonth += (value - currentYear) * 12;
-		selected.year = value;
 		selectionStage -= 1;
 	};
 
 	const setCurrentMonth = (value: number) => (e: MouseEvent) => {
 		currentMonth = value;
-		selected.month = value;
 		selectionStage -= 1;
 	};
 
-	const setCurrentDate = (value: number) => (e: MouseEvent) => {
-		currentDate = value;
-		selected.date = currentDate;
+	const setCurrentDate = (value: number, isActive: boolean) => (e: MouseEvent) => {
+		if (isActive) {
+			// Date selected is from current month
+			currentDate = value;
+		} else if (value > 0) {
+			// Date selected is from next month
+			const daysInMonth = d.month(currentMonth).daysInMonth();
+			currentMonth += 1;
+			currentDate = value - daysInMonth;
+		} else {
+			// Date selected is from previous month
+			currentMonth -= 1;
+			const daysInMonth = d.month(currentMonth).daysInMonth();
+			currentDate = daysInMonth + value;
+		}
+
+		// No need to explicitly set years since months already have that difference accounted for
+		selected = dayjs().month(currentMonth).date(currentDate);
 	};
 </script>
 
@@ -181,7 +191,10 @@
 
 <div class="container">
 	<form class="content">
-		<input type="text" placeholder="dd/mm/yyyy" on:click={toggleDatePicker} class="date-input" />
+		<label for="dateinput" class="date-input__container">
+			<img src={calendarIcon} alt="i" width="24px" height="24px" />
+			<input type="text" placeholder="dd/mm/yyyy" on:click={toggleDatePicker} class="date-input" />
+		</label>
 
 		{#if datePickerOpen}
 			<div class="datepicker">
@@ -221,10 +234,10 @@
 									role="none"
 									class="datepicker__cell"
 									class:active={date.active}
-									on:click={setCurrentDate(date.value)}
-									class:selected={date.value === selected.date && date.active}
+									on:click={setCurrentDate(date.value, date.active)}
+									class:selected={isActiveMonth && date.active && date.value === selected.date()}
 								>
-									{date.value}
+									{date.text}
 								</div>
 							{/each}
 						</div>
@@ -237,7 +250,7 @@
 									role="none"
 									class="datepicker__cell lg"
 									class:active={month.active}
-									class:selected={month.value === selected.month && month.active}
+									class:selected={month.value === selected.month() && month.active}
 									on:click={setCurrentMonth(month.value)}
 								>
 									{month.text}
@@ -253,10 +266,10 @@
 									role="none"
 									class="datepicker__cell lg"
 									class:active={year.active}
-									class:selected={year.value === selected.year && year.active}
+									class:selected={year.value === selected.year() && year.active}
 									on:click={setCurrentYear(year.value)}
 								>
-									{year.value}
+									{year.text}
 								</div>
 							{/each}
 						</div>
@@ -290,22 +303,30 @@
 	}
 
 	.date-input {
-		background-color: lighten($background-primary, 10%);
-		border-radius: 0.35rem;
+		background-color: transparent;
+		max-width: max-content;
+		font-size: 1.25rem;
 		min-width: 17rem;
-		padding: 0.5rem;
 		color: white;
 		border: none;
 		outline: none;
 		width: 100%;
 		flex: 2;
+
+		&__container {
+			background-color: lighten($background-primary, 10%);
+			border-radius: 0.35rem;
+			align-items: center;
+			padding: 0.5rem;
+			display: flex;
+			gap: 0.25rem;
+		}
 	}
 
 	.datepicker {
 		position: absolute;
-		top: calc(100% + 1rem);
-		left: 50%;
-		transform: translateX(-50%);
+		top: 100%;
+		right: 0%;
 
 		gap: 0.25rem;
 		display: flex;
@@ -316,8 +337,11 @@
 
 		color: $text-color-primary;
 		padding: 0.5rem;
-		border-radius: 0.35rem;
+		border-radius: 0.5rem;
 		border: 2px solid lighten($background-primary, 2.5%);
+		border-top: 0;
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
 		background-color: darken($background-primary, 3%);
 
 		&__actions {
