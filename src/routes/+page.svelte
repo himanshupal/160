@@ -2,20 +2,20 @@
 	import { dayOffset, days, months, yearsRange } from '$lib/config';
 	import calendarIcon from '$lib/icons/calendar.svg';
 	import downIcon from '$lib/icons/down.svg';
+	import type { ICellValue } from '../types';
 	import upIcon from '$lib/icons/up.svg';
+	import { onMount } from 'svelte';
 	import dayjs from 'dayjs';
 
-	interface ICellValue {
-		text: string | number;
-		active: boolean;
-		value: number;
-	}
+	/////////////////// Vars declared below this ///////////////////
 
 	const d = dayjs();
 
+	let datePickerUI: HTMLDivElement;
 	let slicedDateList: ICellValue[][];
 	let slicedMonthList: ICellValue[][];
 	let slicedYearList: ICellValue[][];
+	let date: string;
 
 	let selectionStage: 0 | 1 | 2 = 0;
 	let currentMonth = d.month();
@@ -23,11 +23,31 @@
 	let datePickerOpen = true;
 	let selected = dayjs();
 
+	/////////////////// Event listeners below this ///////////////////
+
+	const clickAwayListener = (e: MouseEvent) => {
+		const target = e.target as HTMLDivElement;
+		if (target !== datePickerUI) {
+			if (target.contains(datePickerUI) && target !== datePickerUI) {
+				datePickerOpen = false;
+			}
+		}
+	};
+
+	onMount(() => {
+		window.addEventListener('click', clickAwayListener);
+		return () => {
+			window.removeEventListener('click', clickAwayListener);
+		};
+	});
+
 	/////////////////// Reactive values below this ///////////////////
 
+	$: date = selected.format('YYYY-MM-DD');
 	$: currentYear = d.month(currentMonth).year();
 	$: farthestYearInPast = d.year() - yearsRange;
-	$: isActiveMonth = !((currentMonth % 12) - selected.month());
+	$: isActiveYear = currentYear === selected.year();
+	$: isActiveMonth = currentMonth % 12 === selected.month();
 	$: weekdays = dayOffset ? [...days.slice(dayOffset), ...days.slice(0, dayOffset)] : days;
 
 	$: decadeRange = (() => {
@@ -114,7 +134,10 @@
 
 	/////////////////// Methods below this ///////////////////
 
-	const toggleDatePicker = () => (datePickerOpen = !datePickerOpen);
+	const toggleDatePicker = (e: MouseEvent) => {
+		e.preventDefault();
+		datePickerOpen = !datePickerOpen;
+	};
 
 	const previous = () => {
 		switch (selectionStage) {
@@ -172,6 +195,7 @@
 
 		// No need to explicitly set years since months already have that difference accounted for
 		selected = dayjs().month(currentMonth).date(currentDate);
+		datePickerOpen = false;
 	};
 </script>
 
@@ -181,6 +205,11 @@
 	<style lang="scss">
 		:root {
 			font-family: system-ui, consolas;
+			input[type='date']::-webkit-inner-spin-button,
+			input[type='date']::-webkit-calendar-picker-indicator {
+				display: none;
+				-webkit-appearance: none;
+			}
 		}
 		body {
 			margin: unset;
@@ -193,11 +222,17 @@
 	<form class="content">
 		<label for="dateinput" class="date-input__container">
 			<img src={calendarIcon} alt="i" width="24px" height="24px" />
-			<input type="text" placeholder="dd/mm/yyyy" on:click={toggleDatePicker} class="date-input" />
+			<input
+				type="date"
+				placeholder="dd/mm/yyyy"
+				on:click={toggleDatePicker}
+				class="date-input"
+				bind:value={date}
+			/>
 		</label>
 
 		{#if datePickerOpen}
-			<div class="datepicker">
+			<div class="datepicker" bind:this={datePickerUI}>
 				<div class="datepicker__actions">
 					<button class="datepicker__actions__selector" on:click={updateSelectionStage}>
 						{#if !selectionStage}
@@ -250,7 +285,7 @@
 									role="none"
 									class="datepicker__cell lg"
 									class:active={month.active}
-									class:selected={month.value === selected.month() && month.active}
+									class:selected={isActiveYear && month.value === currentMonth && month.active}
 									on:click={setCurrentMonth(month.value)}
 								>
 									{month.text}
@@ -304,9 +339,7 @@
 
 	.date-input {
 		background-color: transparent;
-		max-width: max-content;
 		font-size: 1.25rem;
-		min-width: 17rem;
 		color: white;
 		border: none;
 		outline: none;
@@ -315,6 +348,7 @@
 
 		&__container {
 			background-color: lighten($background-primary, 10%);
+			width: calc(300px - 1rem);
 			border-radius: 0.35rem;
 			align-items: center;
 			padding: 0.5rem;
