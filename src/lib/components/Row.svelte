@@ -29,8 +29,6 @@
 {/each}
 
 <style lang="scss">
-	$text-color-primary: #ebebeb;
-
 	.row {
 		width: 100%;
 		display: flex;

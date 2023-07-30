@@ -250,8 +250,7 @@
 	</div>
 
 	<style lang="scss">
-		$background-primary: #353535;
-		$text-color-primary: #ebebeb;
+		@use '$lib/styles/vars' as v;
 
 		.datepicker {
 			position: absolute;
@@ -265,11 +264,11 @@
 			max-width: max-content;
 			max-height: max-content;
 
-			color: $text-color-primary;
+			color: v.$text-color-primary;
 			padding: 0.5rem;
 			border-radius: 0.5rem;
-			background-color: darken($background-primary, 3%);
-			border: 2px solid lighten($background-primary, 2.5%);
+			background-color: darken(v.$background-primary, 3%);
+			border: 2px solid lighten(v.$background-primary, 2.5%);
 			border-top: 0;
 			border-top-left-radius: 0;
 			border-top-right-radius: 0;
@@ -281,7 +280,7 @@
 				justify-content: space-between;
 
 				&__selector {
-					background-color: darken($background-primary, 3%);
+					background-color: darken(v.$background-primary, 3%);
 					transition: all 75ms ease-in-out;
 					border-radius: 0.35rem;
 					font-family: inherit;
@@ -295,7 +294,7 @@
 					flex: 1;
 
 					&:hover {
-						background-color: lighten($background-primary, 3%);
+						background-color: lighten(v.$background-primary, 3%);
 					}
 				}
 
@@ -313,7 +312,7 @@
 						border-radius: 0.35rem;
 
 						&:hover {
-							background-color: lighten($background-primary, 3%);
+							background-color: lighten(v.$background-primary, 3%);
 						}
 					}
 				}

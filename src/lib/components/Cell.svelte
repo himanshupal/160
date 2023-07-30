@@ -39,11 +39,7 @@
 </div>
 
 <style lang="scss">
-	$background-primary: #353535;
-	$background-secondary: #49b3eb;
-
-	$text-color-primary: #ebebeb;
-	$text-color-secondary: #686868;
+	@use '$lib/styles/vars' as v;
 
 	.cell {
 		flex: 1;
@@ -55,7 +51,7 @@
 		transition: all 75ms ease-in-out;
 
 		&.nohover {
-			color: darken($text-color-primary, 25%);
+			color: darken(v.$text-color-primary, 25%);
 			font-weight: 600;
 			cursor: default;
 		}
@@ -67,19 +63,19 @@
 
 		&:not(.nohover) {
 			&:hover {
-				background-color: lighten($background-primary, 5%);
-				color: $text-color-primary !important;
+				background-color: lighten(v.$background-primary, 5%);
+				color: v.$text-color-primary !important;
 				border-radius: 100rem;
 			}
 
 			&.selected {
-				background-color: $background-secondary;
-				color: $background-primary !important;
+				background-color: v.$background-secondary;
+				color: v.$background-primary !important;
 				border-radius: 100rem;
 			}
 
 			&:not(&.active) {
-				color: $text-color-secondary;
+				color: v.$text-color-secondary;
 			}
 		}
 	}
