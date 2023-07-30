@@ -20,7 +20,7 @@
 	let selectionStage: 0 | 1 | 2 = 0;
 	let currentMonth = d.month();
 	let currentDate = d.date();
-	let datePickerOpen = true;
+	let datePickerOpen = false;
 	let selected = dayjs();
 
 	/////////////////// Event listeners below this ///////////////////
@@ -200,7 +200,7 @@
 </script>
 
 <svelte:head>
-	<title>Calendar</title>
+	<title>Date Picker</title>
 	<meta name="description" content="Custom Svelte Calendar" />
 	<style lang="scss">
 		:root {
@@ -220,6 +220,7 @@
 
 <div class="container">
 	<form class="content">
+		<span style="color: white">Select a date</span>
 		<label for="dateinput" class="date-input__container">
 			<img src={calendarIcon} alt="i" width="24px" height="24px" />
 			<input
