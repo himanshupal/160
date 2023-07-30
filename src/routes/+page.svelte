@@ -15,18 +15,23 @@
 
 	const d = dayjs();
 
-	let slicedDateList: IDateValue[][];
+	let slicedMonthList: IMonthValue[][];
 	let slicedYearList: IDateValue[][];
+	let slicedDateList: IDateValue[][];
 
 	let selectionStage: 0 | 1 | 2 = 0;
 	let currentMonth = d.month();
 	let currentYear = d.year();
+	let currentDate = d.date();
 	let datePickerOpen = true;
 
-	const monthsList: IMonthValue[] = [
-		...months.map((value, i) => ({ active: true, value: i, text: value })),
-		...months.slice(0, 4).map((value, i) => ({ active: false, value: i, text: value }))
-	];
+	const selected = {
+		year: currentYear,
+		month: currentMonth,
+		date: currentDate
+	};
+
+	/////////////////// Reactive values below this ///////////////////
 
 	$: {
 		const yearDiff = Math.floor((currentMonth - 12) / 12) + 1;
@@ -34,9 +39,7 @@
 	}
 
 	$: farthestYearInPast = d.year() - yearsRange;
-	$: displayMonth = d.month(currentMonth).month() + 1;
 	$: weekdays = dayOffset ? [...days.slice(dayOffset), ...days.slice(0, dayOffset)] : days;
-	$: slicedMonthList = Array.from({ length: 4 }, (_, i) => monthsList.slice(i * 4, i * 4 + 4));
 
 	$: decadeRange = (() => {
 		let year = currentYear % 100;
@@ -45,6 +48,23 @@
 		if (startOfDecade < farthestYearInPast) startOfDecade = farthestYearInPast;
 		return { start: startOfDecade, end: startOfDecade + 9 };
 	})();
+
+	$: {
+		const start = currentYear - d.year();
+		const monthsList: IMonthValue[] = [
+			...months.map((value, i) => ({
+				active: true,
+				value: i + start * 12,
+				text: value
+			})),
+			...months.slice(0, 4).map((value, i) => ({
+				active: false,
+				value: i + start * 12 + 12,
+				text: value
+			}))
+		];
+		slicedMonthList = Array.from({ length: 4 }, (_, i) => monthsList.slice(i * 4, i * 4 + 4));
+	}
 
 	$: {
 		const { start, end } = decadeRange;
@@ -95,6 +115,8 @@
 		slicedDateList = Array.from({ length: 6 }, (_, i) => dateList.slice(i * 7, i * 7 + 7));
 	}
 
+	/////////////////// Methods below this ///////////////////
+
 	const toggleDatePicker = () => (datePickerOpen = !datePickerOpen);
 
 	const previous = () => {
@@ -124,6 +146,23 @@
 			selectionStage += 1;
 		}
 	};
+
+	const setCurrentYear = (value: number) => (e: MouseEvent) => {
+		currentMonth += (value - currentYear) * 12;
+		selected.year = value;
+		selectionStage -= 1;
+	};
+
+	const setCurrentMonth = (value: number) => (e: MouseEvent) => {
+		currentMonth = value;
+		selected.month = value;
+		selectionStage -= 1;
+	};
+
+	const setCurrentDate = (value: number) => (e: MouseEvent) => {
+		currentDate = value;
+		selected.date = currentDate;
+	};
 </script>
 
 <svelte:head>
@@ -149,7 +188,7 @@
 				<div class="datepicker__actions">
 					<button class="datepicker__actions__selector" on:click={updateSelectionStage}>
 						{#if !selectionStage}
-							{displayMonth}
+							{d.month(currentMonth).format('MMMM')}
 						{/if}
 						{selectionStage === 2 ? `${decadeRange.start} - ${decadeRange.end}` : currentYear}
 					</button>
@@ -178,7 +217,13 @@
 					{#each slicedDateList as week}
 						<div class="datepicker__row">
 							{#each week as date}
-								<div class="datepicker__cell" class:active={date.active}>
+								<div
+									role="none"
+									class="datepicker__cell"
+									class:active={date.active}
+									on:click={setCurrentDate(date.value)}
+									class:selected={date.value === selected.date && date.active}
+								>
 									{date.value}
 								</div>
 							{/each}
@@ -188,7 +233,13 @@
 					{#each slicedMonthList as monthList}
 						<div class="datepicker__row">
 							{#each monthList as month}
-								<div class="datepicker__cell lg" class:active={month.active}>
+								<div
+									role="none"
+									class="datepicker__cell lg"
+									class:active={month.active}
+									class:selected={month.value === selected.month && month.active}
+									on:click={setCurrentMonth(month.value)}
+								>
 									{month.text}
 								</div>
 							{/each}
@@ -198,7 +249,13 @@
 					{#each slicedYearList as yearList}
 						<div class="datepicker__row">
 							{#each yearList as year}
-								<div class="datepicker__cell lg" class:active={year.active}>
+								<div
+									role="none"
+									class="datepicker__cell lg"
+									class:active={year.active}
+									class:selected={year.value === selected.year && year.active}
+									on:click={setCurrentYear(year.value)}
+								>
 									{year.value}
 								</div>
 							{/each}
@@ -212,6 +269,8 @@
 
 <style lang="scss">
 	$background-primary: #353535;
+	$background-secondary: #49b3eb;
+
 	$text-color-primary: #ebebeb;
 	$text-color-secondary: #686868;
 
@@ -336,6 +395,12 @@
 				&:hover {
 					background-color: lighten($background-primary, 5%);
 					color: $text-color-primary !important;
+					border-radius: 100rem;
+				}
+
+				&.selected {
+					background-color: $background-secondary;
+					color: $background-primary !important;
 					border-radius: 100rem;
 				}
 
