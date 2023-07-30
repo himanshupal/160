@@ -2,6 +2,14 @@
 	"name": "160",
 	"version": "0.1.0",
 	"type": "module",
+	"author": {
+		"name": "Himanshu Pal",
+		"email": "mailtohimanshupal@gmail.com"
+	},
+	"repository": {
+		"url": "git@github.com:himanshupal/160.git",
+		"type": "git"
+	},
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
