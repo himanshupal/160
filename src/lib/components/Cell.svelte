@@ -11,7 +11,7 @@
 	export let onClick: null | ((value: number, isActive: boolean) => (e: MouseEvent) => void);
 
 	$: isActiveYear = currentYear === selected.year();
-	$: isActiveMonth = currentMonth % 12 === selected.month();
+	$: isActiveMonth = isActiveYear && currentMonth % 12 === selected.month();
 
 	$: isSelected = (() => {
 		if (typeof data === 'string') return false;
