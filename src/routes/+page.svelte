@@ -1,20 +1,15 @@
 <script lang="ts">
 	import DatePicker from '$lib/components/DatePicker.svelte';
-	import calendarIcon from '$lib/icons/calendar.svg';
 
 	let date: string;
-	let datePickerOpen = false;
-
-	const toggleDatePicker = (e: MouseEvent) => {
-		e.preventDefault();
-		datePickerOpen = !datePickerOpen;
-	};
 </script>
 
 <svelte:head>
 	<title>Date Picker</title>
 	<meta name="description" content="Custom Svelte Calendar" />
 	<style lang="scss">
+		@use '$lib/styles/vars' as v;
+
 		:root {
 			font-family: system-ui, consolas;
 			input[type='date']::-webkit-inner-spin-button,
@@ -23,37 +18,27 @@
 				-webkit-appearance: none;
 			}
 		}
+
 		body {
 			margin: unset;
-			background-color: #353535;
+			background-color: v.$background-primary;
 		}
 	</style>
 </svelte:head>
 
 <div class="container">
 	<form class="content">
-		<span style="color: white">Select a date</span>
-		<label for="dateinput" class="date-input__container">
-			<img src={calendarIcon} alt="i" width="24px" height="24px" />
-			<input
-				type="date"
-				placeholder="dd/mm/yyyy"
-				on:click={toggleDatePicker}
-				class="date-input"
-				bind:value={date}
-			/>
-		</label>
-
-		<DatePicker bind:date bind:datePickerOpen />
+		<DatePicker bind:date />
+		<input type="date" placeholder="dd/mm/yyyy" class="input" bind:value={date} />
 	</form>
 </div>
 
 <style lang="scss">
-	$background-primary: #353535;
+	@use '$lib/styles/vars' as v;
 
 	.container {
 		width: 100dvw;
-		height: 65dvh;
+		height: 100dvh;
 
 		display: flex;
 		align-items: center;
@@ -63,26 +48,20 @@
 	.content {
 		display: flex;
 		flex-direction: column;
-		position: relative;
+		align-items: center;
+		gap: 2rem;
 	}
 
-	.date-input {
-		background-color: transparent;
-		font-size: 1.25rem;
-		color: white;
-		border: none;
+	.input {
+		border: 2px solid v.$highlight-primary;
+		background-color: v.$background-secondary;
+		color: v.$highlight-primary;
+		border-radius: 0.5rem;
+		width: min-content;
+		text-align: center;
+		font-size: 1.5rem;
+		padding: 0.35rem;
 		outline: none;
-		width: 100%;
 		flex: 2;
-
-		&__container {
-			background-color: lighten($background-primary, 10%);
-			width: calc(300px - 1rem);
-			border-radius: 0.35rem;
-			align-items: center;
-			padding: 0.5rem;
-			display: flex;
-			gap: 0.25rem;
-		}
 	}
 </style>

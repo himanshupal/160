@@ -3,22 +3,22 @@ export const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 /** Name of months to show on calendar */
 export const months = [
-	'Jan',
-	'Feb',
-	'Mar',
-	'Apr',
+	'January',
+	'February',
+	'March',
+	'April',
 	'May',
-	'Jun',
-	'Jul',
-	'Aug',
-	'Sep',
-	'Oct',
-	'Nov',
-	'Dec'
+	'June',
+	'July',
+	'August',
+	'September',
+	'October',
+	'November',
+	'December'
 ];
 
 /** Offset 0 is treated as Sunday */
 export const dayOffset = 2;
 
 /** No. of years that can be scrolled in past & future */
-export const yearsRange = 100;
+export const yearsRange = 75;
